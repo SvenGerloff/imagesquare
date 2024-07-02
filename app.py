@@ -72,7 +72,7 @@ if image is not None:
             file_name=f"{os.path.splitext(image_source)[0]}-sq.jpg",
             mime="image/jpeg"
         )
-git add .
+
 # Clean up temp directory
 if os.path.exists('./temp'):
     for file in os.listdir('./temp'):
