@@ -32,8 +32,6 @@ st.write("""
        - To download individual images, use the **Download Image** button below each image.
     4. **Reset:** To add new images, click the **Reset** button to clear the previous inputs and results.
     5. **Error Handling:** If you encounter any unexpected error messages, please reload the page and try again.
-
-    Enjoy your experience!
 """)
 
 # Initialize session state for image URLs and processed image paths
