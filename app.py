@@ -87,9 +87,6 @@ with col2:
     reset_clicked = st.button("❌ Reset", help="Click to reset all inputs and clear the results.")
 
 if process_clicked:
-    if os.path.exists('./square'):
-        for file in os.listdir('./square'):
-            os.remove(os.path.join('./square', file))
     if image_paths:
         st.write("Processing your images...")
         progress_bar = st.progress(0)
