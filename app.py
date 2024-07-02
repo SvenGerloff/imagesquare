@@ -34,11 +34,14 @@ if 'image_urls' not in st.session_state:
     st.session_state.image_urls = ""
 if 'processed_image_paths' not in st.session_state:
     st.session_state.processed_image_paths = []
+if 'uploaded_files' not in st.session_state:
+    st.session_state.uploaded_files = []
 
 # Reset functionality
 def reset():
     st.session_state.image_urls = ""
     st.session_state.processed_image_paths = []
+    st.session_state.uploaded_files = []
     if os.path.exists('./temp'):
         for file in os.listdir('./temp'):
             os.remove(os.path.join('./temp', file))
@@ -55,9 +58,9 @@ image_sources = []
 
 # Handle image upload
 if input_method == "Upload Image":
-    uploaded_files = st.file_uploader("Choose image(s)...", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
-    if uploaded_files is not None:
-        for uploaded_file in uploaded_files:
+    st.session_state.uploaded_files = st.file_uploader("Choose image(s)...", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+    if st.session_state.uploaded_files:
+        for uploaded_file in st.session_state.uploaded_files:
             image_path = os.path.join('./temp', uploaded_file.name)
             with open(image_path, 'wb') as file:
                 file.write(uploaded_file.getbuffer())
