@@ -13,6 +13,7 @@ def process_image(image_path, output_dir, output_filename):
 
 # Create directories if not exist
 os.makedirs('./temp', exist_ok=True)
+os.makedirs('./square', exist_ok=True)
 
 st.set_page_config(page_title="Square Product Images", layout="centered", page_icon="📸")
 
@@ -98,7 +99,10 @@ if process_clicked:
             try:
                 process_image(image_path, './square', output_filename)
                 processed_image_path = os.path.join('./square', output_filename)
-                processed_image_paths.append((processed_image_path, output_filename))
+                if os.path.exists(processed_image_path):  # Check if the file was created
+                    processed_image_paths.append((processed_image_path, output_filename))
+                else:
+                    st.error(f"Error: Processed file {processed_image_path} does not exist.")
             except Exception as e:
                 st.error(f"Error processing the image {image_source}: {e}")
 
@@ -117,17 +121,22 @@ if st.session_state.processed_image_paths:
     processed_image_paths = st.session_state.processed_image_paths
     cols = st.columns(4)
     for idx, (processed_image_path, output_filename) in enumerate(processed_image_paths):
-        image = Image.open(processed_image_path)
-        with cols[idx % 4]:
-            st.image(image, use_column_width=True, caption=output_filename)
-            with open(processed_image_path, "rb") as file:
-                st.download_button(
-                    label="📥 Download Image",
-                    data=file,
-                    file_name=output_filename,
-                    mime="image/jpeg",
-                    help="Click to download the processed image."
-                )
+        try:
+            image = Image.open(processed_image_path)
+            with cols[idx % 4]:
+                st.image(image, use_column_width=True, caption=output_filename)
+                with open(processed_image_path, "rb") as file:
+                    st.download_button(
+                        label="📥 Download Image",
+                        data=file,
+                        file_name=output_filename,
+                        mime="image/jpeg",
+                        help="Click to download the processed image."
+                    )
+        except FileNotFoundError:
+            st.error(f"Error: File {processed_image_path} not found.")
+        except Exception as e:
+            st.error(f"Error displaying the image {output_filename}: {e}")
 
     # Show the download all button after processing images
     with col3:
@@ -142,10 +151,4 @@ if st.session_state.processed_image_paths:
             file_name="processed_images.zip",
             mime="application/zip",
             help="Click to download all processed images as a zip file."
-
         )
-
-# Clean up temp directory
-if os.path.exists('./temp'):
-    for file in os.listdir('./temp'):
-        os.remove(os.path.join('./temp', file))
