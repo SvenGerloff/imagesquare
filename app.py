@@ -45,9 +45,6 @@ def reset():
     if os.path.exists('./temp'):
         for file in os.listdir('./temp'):
             os.remove(os.path.join('./temp', file))
-    if os.path.exists('./square'):
-        for file in os.listdir('./square'):
-            os.remove(os.path.join('./square', file))
     st.rerun()
 
 # Choose input method, default to URL input
