@@ -1,15 +1,19 @@
 import streamlit as st
 import os
 import requests
-from subprocess import run
 from io import BytesIO
 from zipfile import ZipFile
-from PIL import Image
+from PIL import Image, ImageOps
 
-# Function to process the image using the bash script
+# Function to process the image using Pillow
 def process_image(image_path, output_dir, output_filename):
-    script_path = './process_image.sh'
-    run(['bash', script_path, image_path, output_dir, output_filename])
+    with Image.open(image_path) as img:
+        img = ImageOps.contain(img, (600, 600))
+        background = Image.new('RGB', (1000, 1000), 'white')
+        offset = ((1000 - img.width) // 2, (1000 - img.height) // 2)
+        background.paste(img, offset)
+        output_path = os.path.join(output_dir, output_filename)
+        background.save(output_path, format='JPEG')
 
 # Create directories if not exist
 os.makedirs('./temp', exist_ok=True)
@@ -19,15 +23,17 @@ st.set_page_config(page_title="Square Product Images", layout="centered", page_i
 
 st.title("📸 Square Product Images")
 st.write("""
-    1. You can either upload one or more image files or enter image URLs.
-    2. Click on the **Process Image(s)** button to start processing the images.
-    3. After processing:
+    Welcome to the Square Product Images app! Follow these steps to process your images:
+
+    1. **Enter Image URLs:** Provide the URLs of the images you want to process, one per line.
+    2. **Process Images:** Click on the **Process Image(s)** button to start processing the images.
+    3. **Download Images:** 
        - To download all processed images as a zip file, click on the **Download All Images as Zip** button.
        - To download individual images, use the **Download Image** button below each image.
-    4. To add new images or URLs, click the **Reset** button to clear the previous inputs and results.
-    5. If you encounter any unexpected error messages, please reload the page and try again.
+    4. **Reset:** To add new images, click the **Reset** button to clear the previous inputs and results.
+    5. **Error Handling:** If you encounter any unexpected error messages, please reload the page and try again.
 
-    Have fun!
+    Enjoy your experience!
 """)
 
 # Initialize session state for image URLs and processed image paths
@@ -35,55 +41,37 @@ if 'image_urls' not in st.session_state:
     st.session_state.image_urls = ""
 if 'processed_image_paths' not in st.session_state:
     st.session_state.processed_image_paths = []
-if 'uploaded_files' not in st.session_state:
-    st.session_state.uploaded_files = []
 
 # Reset functionality
 def reset():
     st.session_state.image_urls = ""
     st.session_state.processed_image_paths = []
-    st.session_state.uploaded_files = []
     if os.path.exists('./temp'):
         for file in os.listdir('./temp'):
             os.remove(os.path.join('./temp', file))
     st.rerun()
 
-# Choose input method, default to URL input
-input_method = st.radio("Select input method:", ("Upload Image", "Enter Image URL(s)"), index=1)
-
+# Handle image URL input
+st.session_state.image_urls = st.text_area("Enter image URLs (one per line)...", value=st.session_state.image_urls)
 image_paths = []
 image_sources = []
 
-# Handle image upload
-if input_method == "Upload Image":
-    st.session_state.uploaded_files = st.file_uploader("Choose image(s)...", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
-    if st.session_state.uploaded_files:
-        for uploaded_file in st.session_state.uploaded_files:
-            image_path = os.path.join('./temp', uploaded_file.name)
+if st.session_state.image_urls:
+    for image_url in st.session_state.image_urls.splitlines():
+        try:
+            response = requests.get(image_url)
+            image_path = os.path.join('./temp', os.path.basename(image_url))
             with open(image_path, 'wb') as file:
-                file.write(uploaded_file.getbuffer())
+                file.write(response.content)
             image_paths.append(image_path)
-            image_sources.append(uploaded_file.name)
-
-# Handle image URL input
-elif input_method == "Enter Image URL(s)":
-    st.session_state.image_urls = st.text_area("Enter image URLs (one per line)...", value=st.session_state.image_urls)
-    if st.session_state.image_urls:
-        for image_url in st.session_state.image_urls.splitlines():
-            try:
-                response = requests.get(image_url)
-                image_path = os.path.join('./temp', os.path.basename(image_url))
-                with open(image_path, 'wb') as file:
-                    file.write(response.content)
-                image_paths.append(image_path)
-                image_sources.append(os.path.basename(image_url))
-            except Exception as e:
-                st.error(f"Error fetching the image from {image_url}: {e}")
+            image_sources.append(os.path.basename(image_url))
+        except Exception as e:
+            st.error(f"Error fetching the image from {image_url}: {e}")
 
 # Buttons for processing, reset, and download
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
-    process_clicked = st.button("⚙️ Process Image(s)", help="Click to process the uploaded images or URLs.")
+    process_clicked = st.button("⚙️ Process Image(s)", help="Click to process the images from the URLs.")
 with col2:
     reset_clicked = st.button("❌ Reset", help="Click to reset all inputs and clear the results.")
 
@@ -111,7 +99,7 @@ if process_clicked:
         st.session_state.processed_image_paths = processed_image_paths
         st.success("Image processing completed successfully!")
     else:
-        st.warning("Please upload or enter image URLs before processing.")
+        st.warning("Please enter image URLs before processing.")
 
 if reset_clicked:
     reset()
