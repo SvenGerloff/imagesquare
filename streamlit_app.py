@@ -4,8 +4,16 @@ import requests
 from io import BytesIO
 from zipfile import ZipFile
 from PIL import Image, ImageOps
-from streamlit_extras.stylable_container import stylable_container
 import uuid
+import subprocess
+import sys
+
+try:
+    from streamlit_extras.stylable_container import stylable_container
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", 'streamlit_extras'])
+finally:
+    from streamlit_extras.stylable_container import stylable_container
 
 # Function to process the image using Pillow
 def process_image(image_path, output_dir, output_filename):
