@@ -32,3 +32,14 @@ There are different versions of the Streamlit app, based on the limitations of S
 To run the app locally, use:
 ```bash
 streamlit run streamlit_app.py
+```
+
+### Community Cloud
+
+1. Go to [Streamlit Community Cloud](https://streamlit.io/cloud) and sign in.
+2. Create a new app and link it to your GitHub repository.
+3. Configure the app by selecting the main script file to run (streamlit_app.py)
+4. Deploy the app and share the URL. (Hint: you can modify the URL)
+
+
+
