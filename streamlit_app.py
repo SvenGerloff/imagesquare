@@ -4,6 +4,8 @@ import requests
 from io import BytesIO
 from zipfile import ZipFile
 from PIL import Image, ImageOps
+from streamlit_extras.stylable_container import stylable_container
+import uuid
 
 # Function to process the image using Pillow
 def process_image(image_path, output_dir, output_filename):
@@ -19,7 +21,9 @@ def process_image(image_path, output_dir, output_filename):
 os.makedirs('./temp', exist_ok=True)
 os.makedirs('./square', exist_ok=True)
 
-st.set_page_config(page_title="Square Product Images", layout="centered", page_icon="📸")
+st.set_page_config(page_title="Square Product Images",
+                   layout="centered",
+                   page_icon="📸")
 
 st.title("📸 Square Product Images")
 st.write("""
@@ -30,7 +34,7 @@ st.write("""
     3. **Download Images:** 
        - To download all processed images as a zip file, click on the **Download All Images as Zip** button.
        - To download individual images, use the **Download Image** button below each image.
-    4. **Reset:** To add new images, click the **Reset** button to clear the previous inputs and results.
+    4. **Reset:** To add new images, click the **Reset** button to clear the previous inputs.
     5. **Error Handling:** If you encounter any unexpected error messages, please reload the page and try again.
 """)
 
@@ -47,6 +51,9 @@ def reset():
     if os.path.exists('./temp'):
         for file in os.listdir('./temp'):
             os.remove(os.path.join('./temp', file))
+    if os.path.exists('./square'):
+        for file in os.listdir('./square'):
+            os.remove(os.path.join('./square', file))
     st.rerun()
 
 # Handle image URL input
@@ -69,9 +76,29 @@ if st.session_state.image_urls:
 # Buttons for processing, reset, and download
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
-    process_clicked = st.button("⚙️ Process Image(s)", help="Click to process the images from the URLs.")
+    with stylable_container(
+            key="green_button",
+            css_styles="""
+              button {
+                  background-color: #20D599;
+                  color: black;
+                  border-radius: 20px;
+              }
+              """,
+    ):
+        process_clicked = st.button("⚙️ Process Image(s)", help="Click to process the images from the URLs.")
 with col2:
-    reset_clicked = st.button("❌ Reset", help="Click to reset all inputs and clear the results.")
+    with stylable_container(
+            key="red_button",
+            css_styles="""
+                  button {
+                      background-color: #F95F68;
+                      color: black;
+                      border-radius: 20px;
+                  }
+                  """,
+    ):
+        reset_clicked = st.button("❌ Reset", help="Click to reset all inputs and clear the results.")
 
 if process_clicked:
     if image_paths:
@@ -81,7 +108,7 @@ if process_clicked:
 
         # Process each image
         for i, (image_path, image_source) in enumerate(zip(image_paths, image_sources)):
-            output_filename = f"{os.path.splitext(image_source)[0]}-sq.jpg"
+            output_filename = f"{str(uuid.uuid4())}.jpg"
             try:
                 process_image(image_path, './square', output_filename)
                 processed_image_path = os.path.join('./square', output_filename)
@@ -112,13 +139,24 @@ if st.session_state.processed_image_paths:
             with cols[idx % 4]:
                 st.image(image, use_column_width=True, caption=output_filename)
                 with open(processed_image_path, "rb") as file:
-                    st.download_button(
-                        label="📥 Download Image",
-                        data=file,
-                        file_name=output_filename,
-                        mime="image/jpeg",
-                        help="Click to download the processed image."
-                    )
+                    with stylable_container(
+                            key=f"blue_button_{output_filename}",
+                            css_styles="""
+                                  button {
+                                      background-color: #227AF7;
+                                      color: black;
+                                      border-radius: 20px;
+                                  }
+                                  """,
+                    ):
+                        st.download_button(
+                            label="📥 Download Image",
+                            data=file,
+                            file_name=output_filename,
+                            mime="image/jpeg",
+                            help="Click to download the processed image.",
+                            key=f"download_button_{output_filename}"
+                        )
         except FileNotFoundError:
             st.error(f"Error: File {processed_image_path} not found.")
         except Exception as e:
@@ -131,13 +169,27 @@ if st.session_state.processed_image_paths:
             for processed_image_path, output_filename in st.session_state.processed_image_paths:
                 zip_file.write(processed_image_path, os.path.basename(processed_image_path))
         zip_buffer.seek(0)
-        st.download_button(
-            label="📦 Download All Images as Zip",
-            data=zip_buffer,
-            file_name="processed_images.zip",
-            mime="application/zip",
-            help="Click to download all processed images as a zip file."
-        )
+        with stylable_container(
+                key="purple_button",
+                css_styles="""
+                      button {
+                          background-color: #9F5FD9;
+                          color: black;
+                          border-radius: 20px;
+                      }
+                      """,
+        ):
+            download_all_clicked = st.download_button(
+                    label="📦 Download All Images as Zip",
+                    data=zip_buffer,
+                    file_name="processed_images.zip",
+                    mime="application/zip",
+                    help="Click to download all processed images as a zip file.",
+                    key="download_all_button"
+                )
+
+        if download_all_clicked:
+            reset()
 
 # Clean up temp directory
 if os.path.exists('./temp'):
