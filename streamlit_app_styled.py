@@ -5,6 +5,7 @@ from io import BytesIO
 from zipfile import ZipFile
 from PIL import Image, ImageOps
 import uuid
+from streamlit_extras.stylable_container import stylable_container
 
 # Function to process the image using Pillow
 def process_image(image_path, output_dir, output_filename):
@@ -75,10 +76,29 @@ if st.session_state.image_urls:
 # Buttons for processing, reset, and download
 col1, col2, col3 = st.columns([1, 1, 1])
 with col1:
-    process_clicked = st.button("⚙️ Process Image(s)", help="Click to process the images from the URLs.")
-
+    with stylable_container(
+            key="green_button",
+            css_styles="""
+              button {
+                  background-color: #20D599;
+                  color: black;
+                  border-radius: 20px;
+              }
+              """,
+    ):
+        process_clicked = st.button("⚙️ Process Image(s)", help="Click to process the images from the URLs.")
 with col2:
-    reset_clicked = st.button("❌ Reset", help="Click to reset all inputs and clear the results.")
+    with stylable_container(
+            key="red_button",
+            css_styles="""
+                  button {
+                      background-color: #F95F68;
+                      color: black;
+                      border-radius: 20px;
+                  }
+                  """,
+    ):
+        reset_clicked = st.button("❌ Reset", help="Click to reset all inputs and clear the results.")
 
 if process_clicked:
     if image_paths:
@@ -119,7 +139,17 @@ if st.session_state.processed_image_paths:
             with cols[idx % 4]:
                 st.image(image, use_column_width=True, caption=output_filename)
                 with open(processed_image_path, "rb") as file:
-                    st.download_button(
+                    with stylable_container(
+                            key=f"blue_button_{output_filename}",
+                            css_styles="""
+                                  button {
+                                      background-color: #227AF7;
+                                      color: black;
+                                      border-radius: 20px;
+                                  }
+                                  """,
+                    ):
+                        st.download_button(
                             label="📥 Download Image",
                             data=file,
                             file_name=output_filename,
@@ -139,7 +169,17 @@ if st.session_state.processed_image_paths:
             for processed_image_path, output_filename in st.session_state.processed_image_paths:
                 zip_file.write(processed_image_path, os.path.basename(processed_image_path))
         zip_buffer.seek(0)
-        download_all_clicked = st.download_button(
+        with stylable_container(
+                key="purple_button",
+                css_styles="""
+                      button {
+                          background-color: #9F5FD9;
+                          color: black;
+                          border-radius: 20px;
+                      }
+                      """,
+        ):
+            download_all_clicked = st.download_button(
                     label="📦 Download All Images as Zip",
                     data=zip_buffer,
                     file_name="processed_images.zip",
